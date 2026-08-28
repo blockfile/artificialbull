@@ -7,17 +7,21 @@
 // so those statuses are retried with backoff; genuinely non-retryable responses
 // (e.g. 404 for an unlisted token) and network errors past the retry budget throw.
 //
-// Every request carries a User-Agent. Cloudflare in front of Blockscout answers
-// Node's built-in fetch — which sends none — with a 403 JavaScript challenge
-// ("Just a moment…", `cf-mitigated: challenge`), while the same request with any
-// real UA passes (observed 2026-08-29; it had worked without one earlier that
-// day, so the rule is heuristic). A 403 is deliberately NOT retried: it is a
-// policy answer, not a blip — check `cf-mitigated` before suspecting the code.
+// Every request carries a User-Agent in the standard self-identifying crawler
+// form, "Mozilla/5.0 (compatible; <name>/<version>; +<homepage>)". Cloudflare
+// in front of Blockscout answers requests without a UA — and, since
+// 2026-08-29, a bare "<name>/<version>" UA — with a 403 JavaScript challenge
+// ("Just a moment…", `cf-mitigated: challenge`); the compatible form passes
+// consistently and still says who we are. A 403 is deliberately NOT retried:
+// it is a policy answer, not a blip — check `cf-mitigated` before suspecting
+// the code. USER_AGENT in the environment overrides the default.
 
 const pkg = require('../../package.json');
 
 const RETRYABLE_STATUS = new Set([408, 425, 429, 500, 502, 503, 504, 520, 521, 522, 523, 524]);
-const USER_AGENT = process.env.USER_AGENT || `${pkg.name}/${pkg.version}`;
+const USER_AGENT =
+  process.env.USER_AGENT ||
+  `Mozilla/5.0 (compatible; ${pkg.name}/${pkg.version}${pkg.homepage ? `; +${pkg.homepage}` : ''})`;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /**

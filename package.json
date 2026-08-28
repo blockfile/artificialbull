@@ -2,7 +2,8 @@
   "name": "ryzenkitty-api",
   "version": "1.0.0",
   "private": true,
-  "description": "Stats API for the RyzenKitty site — serves RYZENKITTY market cap, holder count, total AMD rewarded and the live rewards feed.",
+  "description": "Stats API for the RyzenKitty site — serves RYZEN market cap, holder count, total AMD rewarded and the live rewards feed.",
+  "homepage": "https://ryzenkitty.meme",
   "type": "commonjs",
   "main": "server.js",
   "scripts": {

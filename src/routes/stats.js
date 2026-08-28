@@ -30,7 +30,7 @@ function rewardedUsd(rewards, quote) {
 }
 
 /**
- * Pure: market cap computed from the bonding-curve price and the explorer's
+ * Pure: market cap computed from the bonding-curve price and the token's
  * total supply, for the window before the token graduates to a real pool.
  * Needs both halves — a price with no supply (or vice versa) is null.
  */
@@ -41,6 +41,34 @@ function curveMarketCap(curve, token) {
 }
 
 /**
+ * Pure: the configured supply as Blockscout would report it (a wei string plus
+ * decimals), or null when TOKEN_TOTAL_SUPPLY is not set.
+ */
+function supplyFallback({ tokenTotalSupply, tokenDecimals }) {
+  if (tokenTotalSupply == null || !Number.isFinite(tokenTotalSupply) || tokenTotalSupply <= 0) return null;
+  const decimals = Number.isFinite(tokenDecimals) ? tokenDecimals : 18;
+  return {
+    totalSupply: (BigInt(Math.round(tokenTotalSupply)) * 10n ** BigInt(decimals)).toString(),
+    decimals,
+  };
+}
+
+/**
+ * Pure: fill in supply/decimals from the fallback when the explorer could not
+ * provide them, so the bonding-curve market cap survives a Blockscout outage
+ * (its Cloudflare front intermittently refuses API calls). Explorer values
+ * always win when present.
+ */
+function withSupplyFallback(token, fallback) {
+  if (!fallback) return token;
+  return {
+    ...token,
+    totalSupply: token.totalSupply ?? fallback.totalSupply,
+    decimals: token.decimals ?? fallback.decimals,
+  };
+}
+
+/**
  * Pure: merge the five upstreams into the response body.
  *
  * Market cap prefers DexScreener (live pool pricing, exists only after the
@@ -48,7 +76,8 @@ function curveMarketCap(curve, token) {
  * once the explorer has an exchange rate), then the bonding-curve computation
  * — so the tile shows a real number at every stage of the token's life.
  */
-function buildStats({ market, token, rewards = {}, curve = {}, quote = {}, symbol, tokenAddress }) {
+function buildStats({ market, token: explorerToken, rewards = {}, curve = {}, quote = {}, symbol, tokenAddress, supply = null }) {
+  const token = withSupplyFallback(explorerToken, supply);
   const priceUsd = market.priceUsd ?? curve.priceUsd ?? null;
   const totalRewarded = rewards.totalRewarded ?? null; // AMD token amount
   const totalRewardedUsd = rewardedUsd(rewards, quote);
@@ -119,6 +148,7 @@ router.get('/stats', async (req, res, next) => {
         quote,
         symbol: config.tokenSymbol,
         tokenAddress: config.tokenAddress,
+        supply: supplyFallback(config),
       })
     );
   } catch (err) {
@@ -126,4 +156,4 @@ router.get('/stats', async (req, res, next) => {
   }
 });
 
-module.exports = { router, buildStats };
+module.exports = { router, buildStats, supplyFallback, withSupplyFallback };

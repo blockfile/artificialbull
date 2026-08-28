@@ -78,6 +78,26 @@ Chain CA on launch.
 Because the ticker on the site is **$RYZEN**, `TOKEN_SYMBOL` defaults to
 `RYZEN` (and `TOKEN_NAME` to `Ryzen Kitty`).
 
+## Launch-day findings (2026-08-29)
+
+Token launched at `0x50d0d0da00ffd195d2d1d2448617ad039855ad2b` — on-chain name
+"Ryzen Kitty", symbol **RYZEN**, 18 decimals, total supply 1,000,000,000.
+
+- **Cloudflare vs Blockscout.** Blockscout's Cloudflare front now 403-challenges
+  any request whose User-Agent is missing *or* a bare `<name>/<version>`; the
+  standard self-identifying crawler form `Mozilla/5.0 (compatible; <name>/<version>;
+  +<homepage>)` passes consistently. `fetchJson` sends that by default
+  (`package.json` `homepage`, `USER_AGENT` env overrides).
+- **Supply fallback.** Because Blockscout is the only source of supply +
+  decimals, an outage there also nulls the pre-graduation market cap. New env
+  `TOKEN_TOTAL_SUPPLY` (whole tokens; `TOKEN_DECIMALS`, default 18) feeds
+  `buildStats` a fallback; explorer values win whenever present.
+- **No distributor yet.** Pons answers `state: "none"` for the token, so
+  `ketDistributed`/rewards are null and the feed is empty until Pons creates
+  the fee distributor — a real state, not a fault.
+- Deployed `.env` must carry `TOKEN_SYMBOL=RYZEN` (the site prefers the API's
+  ticker over its own fallback, so `RYZENKITTY` there would show on the page).
+
 ## Flagged assumptions
 
 1. **Reward asset is AMD** — now corroborated by the site (`rewardTicker: '$AMD'`,

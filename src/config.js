@@ -20,6 +20,11 @@ const config = {
   // The site's ticker is $RYZEN (SITE.ticker in its config/site.js).
   tokenSymbol: process.env.TOKEN_SYMBOL || 'RYZEN',
   tokenName: process.env.TOKEN_NAME || 'Ryzen Kitty',
+  // Whole-token total supply, used ONLY to compute the pre-graduation market
+  // cap when Blockscout (the normal source of supply + decimals) is
+  // unreachable. Blank = no fallback. Pons V2 launches mint 1,000,000,000.
+  tokenTotalSupply: num(process.env.TOKEN_TOTAL_SUPPLY, null),
+  tokenDecimals: num(process.env.TOKEN_DECIMALS, 18),
 
   explorerApi,
   // DexScreener's slug for the chain — the market cap comes from here.

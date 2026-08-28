@@ -2,13 +2,42 @@
 
 const test = require('node:test');
 const assert = require('node:assert');
-const { buildStats } = require('./stats');
+const { buildStats, supplyFallback, withSupplyFallback } = require('./stats');
 
-const build = (market, token, rewards = {}, curve = {}, quote = {}) =>
-  buildStats({ market, token, rewards, curve, quote, symbol: 'RYZEN', tokenAddress: '0xabc' });
+const build = (market, token, rewards = {}, curve = {}, quote = {}, supply = null) =>
+  buildStats({ market, token, rewards, curve, quote, symbol: 'RYZEN', tokenAddress: '0xabc', supply });
 
 // Blockscout-shaped supply: 1B tokens at 18 decimals.
 const SUPPLY = { totalSupply: '1000000000000000000000000000', decimals: 18 };
+
+// ── supply fallback (Blockscout unreachable) ────────────────────────────────
+
+test('supplyFallback turns the configured whole-token supply into the explorer\'s wei shape', () => {
+  assert.deepStrictEqual(supplyFallback({ tokenTotalSupply: 1_000_000_000, tokenDecimals: 18 }), SUPPLY);
+  assert.deepStrictEqual(supplyFallback({ tokenTotalSupply: 5, tokenDecimals: 0 }), { totalSupply: '5', decimals: 0 });
+});
+
+test('supplyFallback is null when not configured or nonsense', () => {
+  assert.strictEqual(supplyFallback({ tokenTotalSupply: null, tokenDecimals: 18 }), null);
+  assert.strictEqual(supplyFallback({ tokenTotalSupply: 0, tokenDecimals: 18 }), null);
+  assert.strictEqual(supplyFallback({ tokenTotalSupply: NaN, tokenDecimals: 18 }), null);
+});
+
+test('with Blockscout down, the curve market cap is computed from the configured supply', () => {
+  assert.strictEqual(build({}, {}, {}, { priceUsd: 0.00001 }, {}, SUPPLY).marketCap, 10_000);
+  assert.strictEqual(build({}, {}, {}, { priceUsd: 0.00001 }).marketCap, null); // no fallback configured
+});
+
+test('explorer supply wins over the configured fallback', () => {
+  const explorer = { totalSupply: '2000000000000000000000000000', decimals: 18 }; // 2B
+  assert.deepStrictEqual(withSupplyFallback(explorer, SUPPLY), explorer);
+  assert.strictEqual(build({}, explorer, {}, { priceUsd: 0.00001 }, {}, SUPPLY).marketCap, 20_000);
+});
+
+test('the fallback fills only the missing halves and leaves holders alone', () => {
+  const out = withSupplyFallback({ holders: 7, totalSupply: null, decimals: null }, SUPPLY);
+  assert.deepStrictEqual(out, { holders: 7, ...SUPPLY });
+});
 
 test('returns the fields the site\'s BOOT window reads', () => {
   const out = build({ marketCap: 4_206_900 }, { holders: 6942 }, { totalRewarded: 826.7 }, {}, { priceUsd: 259.4 });

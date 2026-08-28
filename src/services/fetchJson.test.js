@@ -37,7 +37,8 @@ test('always sends a User-Agent — Cloudflare 403-challenges Node\'s bare fetch
   };
   await fetchJson('https://x', { fetchFn, headers: { accept: 'application/json' } });
   assert.strictEqual(seen.headers['user-agent'], USER_AGENT);
-  assert.match(USER_AGENT, /-api\/\d+\.\d+/); // "<package>/<version>"
+  // The self-identifying crawler form — a bare "<name>/<version>" gets challenged too.
+  assert.match(USER_AGENT, /^Mozilla\/5\.0 \(compatible; [a-z]+-api\/\d+\.\d+\.\d+(; \+https:\/\/[^)]+)?\)$/);
   assert.strictEqual(seen.headers.accept, 'application/json'); // caller headers kept
 });
 
