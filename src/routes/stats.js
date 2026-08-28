@@ -1,16 +1,17 @@
 'use strict';
 
-// GET /stats returns the fields the site's stat tiles read (src/config/stats.js
-// in the frontend normalizes by name):
+// GET /stats returns what the site's BOOT window reads (src/api/mockData.js
+// in the frontend documents the shape; VideoTV.jsx renders it):
 //
-//   { "marketCap": 4189702, "amdRewarded": 214446.2, "totalRewarded": 826.7,
-//     "holders": 12879, "price": 0.0000042 }
+//   { "marketCap": 4189702,        -> "Market Cap" panel, formatted with a "$"
+//     "ketDistributed": 826.7,     -> "Total $AMD Distributed" panel, AMD token amount
+//     "totalHolders": 12879 }
 //
-// The rewards tile shows `amdRewarded` (USD) big with `totalRewarded` (the
-// AMD token amount) as a small line beneath it. The other fields are ignored
-// by the current frontend and are there so the site can show them later
-// without a backend change. A field that cannot be sourced is null, never 0 —
-// the frontend hides a null tile, but would render a 0 as a real number.
+// The remaining fields are aliases and extras for sites built from the other
+// templates in this lineage (`amdRewarded`/`rewarded` = USD figure, `price`,
+// `holders`), so any of those frontends works against this API unchanged.
+// A field that cannot be sourced is null, never 0 — the site renders a null
+// as "—", but would render a 0 as a real number.
 
 const express = require('express');
 const config = require('../config');
@@ -49,22 +50,25 @@ function curveMarketCap(curve, token) {
  */
 function buildStats({ market, token, rewards = {}, curve = {}, quote = {}, symbol, tokenAddress }) {
   const priceUsd = market.priceUsd ?? curve.priceUsd ?? null;
+  const totalRewarded = rewards.totalRewarded ?? null; // AMD token amount
   const totalRewardedUsd = rewardedUsd(rewards, quote);
+  const holders = token.holders ?? null;
   return {
     marketCap: market.marketCap ?? token.circulatingMarketCap ?? curveMarketCap(curve, token),
-    holders: token.holders ?? null,
-    totalRewarded: rewards.totalRewarded ?? null, // AMD token amount — the tile's small line
+    holders,
+    totalHolders: holders, // the name this site's mock shape uses
+    totalRewarded,
+    // "Total $AMD Distributed" panel — the site shows this without a "$", so
+    // it is the AMD token amount, not USD. (Field name inherited from the
+    // template's original token.)
+    ketDistributed: totalRewarded,
     totalRewardedUsd,
-    // The site's "Total $AMD Rewarded" tile reads this name for its big
-    // number and formats it as dollars, so it carries the USD figure.
+    // USD figure under the names the other frontend templates read
+    // (`raw.<asset>Rewarded ?? raw.<asset>_rewarded ?? raw.rewarded`).
     amdRewarded: totalRewardedUsd,
-    // Same figure under the generic name the site's normalizer accepts as a
-    // fallback (`raw.<asset>Rewarded ?? raw.<asset>_rewarded ?? raw.rewarded`),
-    // so a frontend copied from another token's site works before its field
-    // is renamed.
     rewarded: totalRewardedUsd,
     priceUsd,
-    price: priceUsd, // the name the site's normalizer reads
+    price: priceUsd,
     liquidityUsd: market.liquidityUsd ?? null,
     symbol,
     tokenAddress: tokenAddress ?? null,

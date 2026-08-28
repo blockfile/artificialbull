@@ -17,7 +17,9 @@ const config = {
   // RYZENKITTY's contract address. Blank until the token is launched — every stat
   // then resolves to null, which the site renders as "—" rather than a zero.
   tokenAddress: lowerOrNull(process.env.TOKEN_ADDRESS),
-  tokenSymbol: process.env.TOKEN_SYMBOL || 'RYZENKITTY',
+  // The site's ticker is $RYZEN (SITE.ticker in its config/site.js).
+  tokenSymbol: process.env.TOKEN_SYMBOL || 'RYZEN',
+  tokenName: process.env.TOKEN_NAME || 'Ryzen Kitty',
 
   explorerApi,
   // DexScreener's slug for the chain — the market cap comes from here.

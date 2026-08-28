@@ -6,6 +6,7 @@ const cors = require('cors');
 const config = require('./src/config');
 const { router: statsRouter } = require('./src/routes/stats');
 const { router: rewardsRouter } = require('./src/routes/rewards');
+const { router: tokenRouter } = require('./src/routes/token');
 
 const app = express();
 app.disable('x-powered-by');
@@ -31,7 +32,7 @@ app.get('/', (req, res) => {
     name: 'ryzenkitty-api',
     description: 'RYZENKITTY market cap, holder count, total AMD rewarded and the live rewards feed for the RyzenKitty site',
     token: { symbol: config.tokenSymbol, address: config.tokenAddress },
-    endpoints: ['GET /stats', 'GET /rewards?cursor&limit', 'GET /health'],
+    endpoints: ['GET /token', 'GET /stats', 'GET /rewards?cursor&limit', 'GET /health'],
   });
 });
 
@@ -41,10 +42,11 @@ app.get('/health', (req, res) => {
 
 // Mounted twice so the site works whether VITE_API_BASE_URL is set to
 // https://api.<site> or https://api.<site>/api.
-app.use('/', statsRouter);
-app.use('/', rewardsRouter);
-app.use('/api', statsRouter);
-app.use('/api', rewardsRouter);
+for (const base of ['/', '/api']) {
+  app.use(base, tokenRouter);
+  app.use(base, statsRouter);
+  app.use(base, rewardsRouter);
+}
 
 app.use((req, res) => res.status(404).json({ error: 'not found' }));
 

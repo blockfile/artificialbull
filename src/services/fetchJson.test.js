@@ -2,7 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert');
-const { fetchJson } = require('./fetchJson');
+const { fetchJson, USER_AGENT } = require('./fetchJson');
 
 const okResponse = (data) => ({ ok: true, json: async () => data });
 
@@ -29,6 +29,28 @@ test('a plain GET still works with no method/body given', async () => {
   assert.deepStrictEqual(await fetchJson('https://x', { fetchFn }), { ok: 1 });
 });
 
+test('always sends a User-Agent — Cloudflare 403-challenges Node\'s bare fetch', async () => {
+  let seen;
+  const fetchFn = async (url, init) => {
+    seen = init;
+    return okResponse({});
+  };
+  await fetchJson('https://x', { fetchFn, headers: { accept: 'application/json' } });
+  assert.strictEqual(seen.headers['user-agent'], USER_AGENT);
+  assert.match(USER_AGENT, /-api\/\d+\.\d+/); // "<package>/<version>"
+  assert.strictEqual(seen.headers.accept, 'application/json'); // caller headers kept
+});
+
+test('a caller-supplied User-Agent wins over the default', async () => {
+  let seen;
+  const fetchFn = async (url, init) => {
+    seen = init;
+    return okResponse({});
+  };
+  await fetchJson('https://x', { fetchFn, headers: { 'user-agent': 'custom/1' } });
+  assert.strictEqual(seen.headers['user-agent'], 'custom/1');
+});
+
 test('retries a transient failure and then succeeds', async () => {
   let calls = 0;
   const fetchFn = async () => {
@@ -41,12 +63,14 @@ test('retries a transient failure and then succeeds', async () => {
   assert.strictEqual(calls, 2);
 });
 
-test('does not retry a non-retryable status', async () => {
-  let calls = 0;
-  const fetchFn = async () => {
-    calls += 1;
-    return { ok: false, status: 404 };
-  };
-  await assert.rejects(fetchJson('https://x', { fetchFn, sleepFn: async () => {} }), /HTTP 404/);
-  assert.strictEqual(calls, 1);
+test('does not retry a non-retryable status (404, or a Cloudflare 403 challenge)', async () => {
+  for (const status of [404, 403]) {
+    let calls = 0;
+    const fetchFn = async () => {
+      calls += 1;
+      return { ok: false, status };
+    };
+    await assert.rejects(fetchJson('https://x', { fetchFn, sleepFn: async () => {} }), new RegExp(`HTTP ${status}`));
+    assert.strictEqual(calls, 1);
+  }
 });

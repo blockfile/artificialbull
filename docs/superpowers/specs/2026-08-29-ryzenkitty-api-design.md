@@ -57,20 +57,34 @@ unchanged apart from the wording.
   normalizer accepts as a fallback (`raw.<x>Rewarded ?? raw.<x>_rewarded ?? raw.rewarded`),
   so a frontend copied from peccy works whether or not its field was renamed.
 
-## Frontend
+## Frontend: `d:\projects\ryzen\Meme1` (the "icat-guild" template)
 
-The frontend (a copy of `d:\projects\peccy`, not yet created) needs
-`VITE_API_BASE_URL=https://api.ryzenkitty.meme`, `VITE_USE_MOCK=false`, and —
-if the stats normalizer is renamed — `amdRewarded` / `amdRewardedTokens`; with
-no rename it still works through the `rewarded` / `totalRewarded` fallbacks.
+Checked 2026-08-29. Different template from peccy's. In live mode
+(`VITE_USE_MOCK=false`) it calls exactly three endpoints via `src/api/client.js`,
+`${VITE_API_BASE_URL}${path}`; `/how-it-works`, `/eligibility`, `/socials` are
+listed in `ENDPOINTS` but never fetched.
+
+| Call (component)                          | Reads                                              | API field                          |
+| ----------------------------------------- | -------------------------------------------------- | ---------------------------------- |
+| `GET /token` (App.jsx, once)              | `ticker` (falls back to `SITE.ticker` = `$RYZEN`)  | `/token` → `{ name, ticker: "$RYZEN", symbol, contractAddress, chain }` |
+| `GET /stats` (VideoTV.jsx BOOT window)    | `marketCap` (`compact(…,'$')`), `ketDistributed` (`compact(…)`, no `$` → **AMD token amount**), optional `distributedSymbol` | `marketCap`, `ketDistributed` = `totalRewarded`; `distributedSymbol` omitted so `SITE.rewardTicker` applies |
+| `GET /rewards` (RewardsScene.jsx, polled every 15 s, no query) | `transactions[]` `{ id, wallet, amount, txHash, timestamp }` — whole list in a scrollable ledger with wallet search; `symbol`/`txUrl` optional | `transactions` (ISO `timestamp`), default page = 50 rows; `rows`/`nextCursor` kept for the paging frontends |
+
+Frontend `.env.local`: `VITE_USE_MOCK=false`, `VITE_API_BASE_URL=https://api.ryzenkitty.meme`.
+No frontend code changes needed. Hand-edited `src/config/site.js` still holds a
+Solana-style placeholder in `contractAddress` — replace with the real Robinhood
+Chain CA on launch.
+
+Because the ticker on the site is **$RYZEN**, `TOKEN_SYMBOL` defaults to
+`RYZEN` (and `TOKEN_NAME` to `Ryzen Kitty`).
 
 ## Flagged assumptions
 
-1. **Reward asset is AMD** (tokenized Advanced Micro Devices), inferred from
-   the name "RyzenKitty". It is only a default (`REWARD_TOKEN_ADDRESS`); if the
-   launch pairs with a different asset, change that env value and the
-   `amdRewarded` field name in `routes/stats.js`.
-2. Ticker is `RYZENKITTY` (`TOKEN_SYMBOL`, env-configurable).
+1. **Reward asset is AMD** — now corroborated by the site (`rewardTicker: '$AMD'`,
+   `rewardContractAddress` = the same AMD token). Still an env default.
+2. `ketDistributed` is served as the **AMD token amount** because the site
+   renders it without a `$`; if USD is wanted, swap to `totalRewardedUsd` in
+   `buildStats` (and the site would need to add its `$` prefix).
 
 ## Delivery
 

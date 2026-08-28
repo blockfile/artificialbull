@@ -5,17 +5,26 @@ const assert = require('node:assert');
 const { buildStats } = require('./stats');
 
 const build = (market, token, rewards = {}, curve = {}, quote = {}) =>
-  buildStats({ market, token, rewards, curve, quote, symbol: 'RYZENKITTY', tokenAddress: '0xabc' });
+  buildStats({ market, token, rewards, curve, quote, symbol: 'RYZEN', tokenAddress: '0xabc' });
 
 // Blockscout-shaped supply: 1B tokens at 18 decimals.
 const SUPPLY = { totalSupply: '1000000000000000000000000000', decimals: 18 };
 
-test('returns the fields the site reads', () => {
+test('returns the fields the site\'s BOOT window reads', () => {
   const out = build({ marketCap: 4_206_900 }, { holders: 6942 }, { totalRewarded: 826.7 }, {}, { priceUsd: 259.4 });
   assert.strictEqual(out.marketCap, 4_206_900);
+  assert.strictEqual(out.ketDistributed, 826.7); // "Total $AMD Distributed" — token amount, no "$"
+  assert.strictEqual(out.totalHolders, 6942);
+  // aliases for the other frontend templates
   assert.strictEqual(out.holders, 6942);
   assert.strictEqual(out.totalRewarded, 826.7);
   assert.strictEqual(out.amdRewarded, 826.7 * 259.4);
+});
+
+test('ketDistributed and totalHolders are null (never 0) when unsourced, and keep a real 0', () => {
+  assert.strictEqual(build({}, {}).ketDistributed, null);
+  assert.strictEqual(build({}, {}).totalHolders, null);
+  assert.strictEqual(build({}, {}, { totalRewarded: 0 }).ketDistributed, 0);
 });
 
 test('`rewarded` is the generic alias of amdRewarded, null when missing', () => {

@@ -6,8 +6,18 @@
 // DexScreener rate-limits. A single blip must not blank the site's stats panel,
 // so those statuses are retried with backoff; genuinely non-retryable responses
 // (e.g. 404 for an unlisted token) and network errors past the retry budget throw.
+//
+// Every request carries a User-Agent. Cloudflare in front of Blockscout answers
+// Node's built-in fetch — which sends none — with a 403 JavaScript challenge
+// ("Just a moment…", `cf-mitigated: challenge`), while the same request with any
+// real UA passes (observed 2026-08-29; it had worked without one earlier that
+// day, so the rule is heuristic). A 403 is deliberately NOT retried: it is a
+// policy answer, not a blip — check `cf-mitigated` before suspecting the code.
+
+const pkg = require('../../package.json');
 
 const RETRYABLE_STATUS = new Set([408, 425, 429, 500, 502, 503, 504, 520, 521, 522, 523, 524]);
+const USER_AGENT = process.env.USER_AGENT || `${pkg.name}/${pkg.version}`;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /**
@@ -17,11 +27,12 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
  *          sleepFn?: (ms:number)=>Promise<void>, fetchFn?: typeof fetch}} [opts]
  */
 async function fetchJson(url, { headers, method, body, retries = 3, delayMs = 1000, sleepFn = sleep, fetchFn = fetch } = {}) {
+  const allHeaders = { 'user-agent': USER_AGENT, ...headers };
   let lastErr;
   for (let attempt = 0; attempt <= retries; attempt += 1) {
     let res;
     try {
-      res = await fetchFn(url, { headers, method, body });
+      res = await fetchFn(url, { headers: allHeaders, method, body });
     } catch (err) {
       lastErr = err; // network / DNS / socket error — retryable
       if (attempt === retries) throw err;
@@ -40,4 +51,4 @@ async function fetchJson(url, { headers, method, body, retries = 3, delayMs = 10
   throw lastErr; // unreachable (loop returns or throws), kept for clarity
 }
 
-module.exports = { fetchJson, RETRYABLE_STATUS };
+module.exports = { fetchJson, RETRYABLE_STATUS, USER_AGENT };
