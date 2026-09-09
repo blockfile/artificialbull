@@ -4,12 +4,15 @@
 // in the frontend documents the shape; VideoTV.jsx renders it):
 //
 //   { "marketCap": 4189702,        -> "Market Cap" panel, formatted with a "$"
-//     "ketDistributed": 826.7,     -> "Total $AMD Distributed" panel, AMD token amount
+//     "ketDistributed": 826.7,     -> "Total $<reward> Distributed" panel, a token amount
 //     "totalHolders": 12879 }
 //
 // The remaining fields are aliases and extras for sites built from the other
-// templates in this lineage (`amdRewarded`/`rewarded` = USD figure, `price`,
-// `holders`), so any of those frontends works against this API unchanged.
+// templates in this lineage (`<asset>Rewarded`/`rewarded` = USD figure, `price`,
+// `holders`), so any of those frontends works against this API unchanged. The
+// `<asset>` half of that alias is built from REWARD_SYMBOL, so a site copied
+// from the AMD-paired sibling still finds `amdRewarded`, while a launch paired
+// with a different stock gets an alias naming the asset it actually pays.
 // A field that cannot be sourced is null, never 0 — the site renders a null
 // as "—", but would render a 0 as a real number.
 
@@ -23,7 +26,7 @@ const { getQuotePrice } = require('../services/quoteprice');
 
 const router = express.Router();
 
-/** Pure: USD value of the AMD paid to holders, or null if either leg is missing. */
+/** Pure: USD value of the reward asset paid to holders, or null if a leg is missing. */
 function rewardedUsd(rewards, quote) {
   if (typeof rewards.totalRewarded !== 'number' || typeof quote.priceUsd !== 'number') return null;
   return rewards.totalRewarded * quote.priceUsd;
@@ -76,10 +79,20 @@ function withSupplyFallback(token, fallback) {
  * once the explorer has an exchange rate), then the bonding-curve computation
  * — so the tile shows a real number at every stage of the token's life.
  */
-function buildStats({ market, token: explorerToken, rewards = {}, curve = {}, quote = {}, symbol, tokenAddress, supply = null }) {
+function buildStats({
+  market,
+  token: explorerToken,
+  rewards = {},
+  curve = {},
+  quote = {},
+  symbol,
+  tokenAddress,
+  supply = null,
+  rewardSymbol = 'AMD',
+}) {
   const token = withSupplyFallback(explorerToken, supply);
   const priceUsd = market.priceUsd ?? curve.priceUsd ?? null;
-  const totalRewarded = rewards.totalRewarded ?? null; // AMD token amount
+  const totalRewarded = rewards.totalRewarded ?? null; // a reward-asset token amount
   const totalRewardedUsd = rewardedUsd(rewards, quote);
   const holders = token.holders ?? null;
   return {
@@ -87,15 +100,19 @@ function buildStats({ market, token: explorerToken, rewards = {}, curve = {}, qu
     holders,
     totalHolders: holders, // the name this site's mock shape uses
     totalRewarded,
-    // "Total $AMD Distributed" panel — the site shows this without a "$", so
-    // it is the AMD token amount, not USD. (Field name inherited from the
-    // template's original token.)
+    // "Total $<reward> Distributed" panel — the site shows this without a "$",
+    // so it is the reward-asset token amount, not USD. (Field name inherited
+    // from the template's original token.)
     ketDistributed: totalRewarded,
     totalRewardedUsd,
     // USD figure under the names the other frontend templates read
-    // (`raw.<asset>Rewarded ?? raw.<asset>_rewarded ?? raw.rewarded`).
-    amdRewarded: totalRewardedUsd,
+    // (`raw.<asset>Rewarded ?? raw.<asset>_rewarded ?? raw.rewarded`), where
+    // <asset> is the configured reward ticker lowercased: `amdRewarded` on an
+    // AMD-paired launch, `nvdaRewarded` on an NVDA-paired one.
+    [`${rewardSymbol.toLowerCase()}Rewarded`]: totalRewardedUsd,
     rewarded: totalRewardedUsd,
+    // So a site can label the tile without hardcoding the asset.
+    rewardSymbol,
     priceUsd,
     price: priceUsd,
     liquidityUsd: market.liquidityUsd ?? null,
@@ -124,19 +141,19 @@ router.get('/stats', async (req, res, next) => {
     const quote = quoteResult.status === 'fulfilled' ? quoteResult.value : {};
 
     if (marketResult.status === 'rejected') {
-      console.warn('[ryzenkitty] market data unavailable:', marketResult.reason?.message);
+      console.warn('[ryzeninu] market data unavailable:', marketResult.reason?.message);
     }
     if (tokenResult.status === 'rejected') {
-      console.warn('[ryzenkitty] holder count unavailable:', tokenResult.reason?.message);
+      console.warn('[ryzeninu] holder count unavailable:', tokenResult.reason?.message);
     }
     if (rewardsResult.status === 'rejected') {
-      console.warn('[ryzenkitty] rewards unavailable:', rewardsResult.reason?.message);
+      console.warn('[ryzeninu] rewards unavailable:', rewardsResult.reason?.message);
     }
     if (curveResult.status === 'rejected') {
-      console.warn('[ryzenkitty] curve price unavailable:', curveResult.reason?.message);
+      console.warn('[ryzeninu] curve price unavailable:', curveResult.reason?.message);
     }
     if (quoteResult.status === 'rejected') {
-      console.warn('[ryzenkitty] AMD price unavailable:', quoteResult.reason?.message);
+      console.warn(`[ryzeninu] ${config.rewardSymbol} price unavailable:`, quoteResult.reason?.message);
     }
 
     res.json(
@@ -149,6 +166,7 @@ router.get('/stats', async (req, res, next) => {
         symbol: config.tokenSymbol,
         tokenAddress: config.tokenAddress,
         supply: supplyFallback(config),
+        rewardSymbol: config.rewardSymbol,
       })
     );
   } catch (err) {

@@ -8,7 +8,7 @@
 //
 //   { "transactions": [{ "id", "wallet", "amount", "txHash", "timestamp" }], ... }
 //
-// `amount` is an AMD token amount (the site formats it and appends its own
+// `amount` is a reward-asset token amount (the site formats it and appends its own
 // reward ticker), `timestamp` is ISO-8601, `txHash` is linked to the Robinhood
 // Chain explorer by the site. `symbol`/`txUrl` are deliberately omitted so the
 // site's own SITE.rewardTicker / SITE.explorerTxBase apply.
@@ -72,7 +72,7 @@ router.get('/rewards', async (req, res) => {
   } catch (err) {
     // Nothing cached for this page and the upstream is down. A 502 makes the
     // site show its retry state; an empty 200 would read as "no payouts yet".
-    console.warn('[ryzenkitty] rewards feed unavailable:', err.message);
+    console.warn('[ryzeninu] rewards feed unavailable:', err.message);
     res.status(502).json({ error: 'rewards feed unavailable' });
   }
 });

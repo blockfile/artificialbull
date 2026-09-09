@@ -1,20 +1,24 @@
 'use strict';
 
-// AMD/USD — the price of the tokenized-AMD asset that RYZENKITTY is paired with
-// and that holder rewards are paid in. Two consumers share this one cached
-// read: the bonding-curve market cap (curve price is in AMD) and the USD
-// figure for rewards paid out. AMD has deep USDG pools on Robinhood Chain, so
-// DexScreener answering "no pair" is an upstream glitch, never a real state —
-// it throws so the stale-while-error cache keeps the last good price.
+// Quote/USD — the price of the tokenized stock RYZENINU is paired with and
+// that holder rewards are paid in (AMD by default; REWARD_TOKEN_ADDRESS and
+// REWARD_SYMBOL name it). Two consumers share this one cached read: the
+// bonding-curve market cap (the curve price is denominated in the quote asset)
+// and the USD figure for rewards paid out. These tokenized stocks have deep
+// USDG pools on Robinhood Chain, so DexScreener answering "no pair" is an
+// upstream glitch, never a real state — it throws so the stale-while-error
+// cache keeps the last good price.
 
 const config = require('./../config');
 const { fetchJson } = require('./fetchJson');
 const { cached } = require('./cache');
 const { parsePairs } = require('./marketdata');
 
-/** Pure: a parsed DexScreener result for AMD must carry a price. */
+/** Pure: a parsed DexScreener result for the quote asset must carry a price. */
 function requireQuotePrice(market) {
-  if (typeof market.priceUsd !== 'number') throw new Error('AMD price unavailable from DexScreener');
+  if (typeof market.priceUsd !== 'number') {
+    throw new Error(`${config.rewardSymbol} price unavailable from DexScreener`);
+  }
   return { priceUsd: market.priceUsd };
 }
 

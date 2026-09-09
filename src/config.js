@@ -14,12 +14,12 @@ const explorerApi = (process.env.EXPLORER_API || 'https://robinhoodchain.blocksc
 const config = {
   port: num(process.env.PORT, 3000),
 
-  // RYZENKITTY's contract address. Blank until the token is launched — every stat
+  // RYZENINU's contract address. Blank until the token is launched — every stat
   // then resolves to null, which the site renders as "—" rather than a zero.
   tokenAddress: lowerOrNull(process.env.TOKEN_ADDRESS),
-  // The site's ticker is $RYZEN (SITE.ticker in its config/site.js).
-  tokenSymbol: process.env.TOKEN_SYMBOL || 'RYZEN',
-  tokenName: process.env.TOKEN_NAME || 'Ryzen Kitty',
+  // The site's ticker is $RYZENINU (SITE.ticker in its config/site.js).
+  tokenSymbol: process.env.TOKEN_SYMBOL || 'RYZENINU',
+  tokenName: process.env.TOKEN_NAME || 'Ryzen Inu',
   // Whole-token total supply, used ONLY to compute the pre-graduation market
   // cap when Blockscout (the normal source of supply + decimals) is
   // unreachable. Blank = no fallback. Pons V2 launches mint 1,000,000,000.
@@ -36,22 +36,32 @@ const config = {
   marketTtlMs: num(process.env.MARKET_TTL_MS, 30_000),
   holdersTtlMs: num(process.env.HOLDERS_TTL_MS, 120_000),
 
-  // ── Pons rewards ("Total AMD Rewarded") ───────────────────────────────────
-  // RYZENKITTY's 2% creator tax accrues in AMD (tokenized AMD stock) and routes to a
-  // per-token fee distributor that pushes payouts to holder wallets. The
-  // cumulative "paid to holders" total comes from Pons's public API — the same
-  // source their token page renders (see src/services/rewards.js).
+  // ── Pons rewards ("Total <reward> Rewarded") ──────────────────────────────
+  // This launch does NOT distribute anything itself. RYZENINU's creator tax
+  // accrues in the curve's quote asset and routes — with no creator claim — to
+  // pons's own per-token fee distributor, which pushes payouts straight to
+  // holder wallets. Everything here just READS what pons already paid: the
+  // cumulative total from pons's public API (services/rewards.js) and the
+  // individual payouts from the distributor's on-chain outflows
+  // (services/rewardsfeed.js). There is no wallet key in this project.
   ponsApi: (process.env.PONS_API || 'https://www.ponsfamily.com').replace(/\/$/, ''),
-  // AMD (tokenized AMD stock) — the curve's quote asset and the reward asset.
-  // Its DexScreener USD price converts the bonding-curve price to USD.
+  // The curve's quote asset, which is also the reward asset. Defaults to AMD
+  // (tokenized AMD stock, "AMD • Robinhood Token", 18 decimals) because that is
+  // what the sibling Ryzen launch pairs with — CONFIRM IT against the token's
+  // pons page before go-live and override here if the pair is a different
+  // stock. Its DexScreener USD price converts the bonding-curve price to USD.
   rewardTokenAddress: lowerOrNull(process.env.REWARD_TOKEN_ADDRESS) || '0x86923f96303d656e4aa86d9d42d1e57ad2023fdc',
-  // Decimals of the AMD reward asset.
+  // Decimals of the reward asset.
   rewardDecimals: num(process.env.REWARD_DECIMALS, 18),
+  // Ticker of the reward asset, without the "$". Labels log lines, the preflight
+  // and the `<asset>Rewarded` alias in /stats — so changing REWARD_TOKEN_ADDRESS
+  // to a different stock does not leave the API calling it AMD.
+  rewardSymbol: (process.env.REWARD_SYMBOL || 'AMD').trim().toUpperCase(),
   rewardsTtlMs: num(process.env.REWARDS_TTL_MS, 60_000),
 
   // ── Rewards feed (GET /rewards) ────────────────────────────────────────────
-  // Every payout is an AMD transfer OUT of the fee distributor, listed by
-  // Blockscout (see src/services/rewardsfeed.js). The distributor address is
+  // Every payout is a reward-asset transfer OUT of the fee distributor, listed
+  // by Blockscout (see src/services/rewardsfeed.js). The distributor address is
   // normally resolved from the Pons API; this pins it instead.
   distributorAddress: lowerOrNull(process.env.DISTRIBUTOR_ADDRESS),
   feedTtlMs: num(process.env.FEED_TTL_MS, 30_000),

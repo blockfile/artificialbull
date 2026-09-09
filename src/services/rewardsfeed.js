@@ -1,6 +1,7 @@
 'use strict';
 
-// The rewards feed: individual AMD payouts to holder wallets, newest first.
+// The rewards feed: individual reward-asset payouts to holder wallets, newest
+// first. Made by pons's distributor, not by this project.
 //
 // Pons publishes only epoch totals for a token's fee distributor — there is no
 // per-payout endpoint. But every payout IS an on-chain ERC-20 transfer of the

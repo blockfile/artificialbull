@@ -29,8 +29,8 @@ app.use(
 
 app.get('/', (req, res) => {
   res.json({
-    name: 'ryzenkitty-api',
-    description: 'RYZENKITTY market cap, holder count, total AMD rewarded and the live rewards feed for the RyzenKitty site',
+    name: 'ryzeninu-api',
+    description: `RYZENINU market cap, holder count, total ${config.rewardSymbol} rewarded by the pons fee distributor, and the live payout feed`,
     token: { symbol: config.tokenSymbol, address: config.tokenAddress },
     endpoints: ['GET /token', 'GET /stats', 'GET /rewards?cursor&limit', 'GET /health'],
   });
@@ -60,11 +60,11 @@ app.use((err, req, res, next) => {
     const origin = req.get('origin') || 'unknown';
     if (!loggedBlockedOrigins.has(origin)) {
       loggedBlockedOrigins.add(origin);
-      console.warn(`[ryzenkitty] blocking CORS origin: ${origin}`);
+      console.warn(`[ryzeninu] blocking CORS origin: ${origin}`);
     }
     return res.status(403).json({ error: 'origin not allowed' });
   }
-  console.error('[ryzenkitty] request error:', err);
+  console.error('[ryzeninu] request error:', err);
   res.status(500).json({ error: err.message });
 });
 
@@ -72,15 +72,15 @@ let server;
 
 if (require.main === module) {
   server = app.listen(config.port, () => {
-    console.log(`[ryzenkitty] listening on http://localhost:${config.port}`);
+    console.log(`[ryzeninu] listening on http://localhost:${config.port}`);
     console.log(
-      `[ryzenkitty] token=${config.tokenSymbol} address=${config.tokenAddress || '(not set — stats will be null)'}`
+      `[ryzeninu] token=${config.tokenSymbol} address=${config.tokenAddress || '(not set — stats will be null)'}`
     );
-    console.log(`[ryzenkitty] cors=${config.corsOrigins.join(', ')}`);
+    console.log(`[ryzeninu] cors=${config.corsOrigins.join(', ')}`);
   });
 
   const shutdown = (signal) => {
-    console.log(`\n[ryzenkitty] ${signal} received, shutting down`);
+    console.log(`\n[ryzeninu] ${signal} received, shutting down`);
     if (server) server.close(() => process.exit(0));
     else process.exit(0);
   };

@@ -5,7 +5,7 @@ const assert = require('node:assert');
 const { buildStats, supplyFallback, withSupplyFallback } = require('./stats');
 
 const build = (market, token, rewards = {}, curve = {}, quote = {}, supply = null) =>
-  buildStats({ market, token, rewards, curve, quote, symbol: 'RYZEN', tokenAddress: '0xabc', supply });
+  buildStats({ market, token, rewards, curve, quote, symbol: 'RYZENINU', tokenAddress: '0xabc', supply });
 
 // Blockscout-shaped supply: 1B tokens at 18 decimals.
 const SUPPLY = { totalSupply: '1000000000000000000000000000', decimals: 18 };
@@ -139,4 +139,29 @@ test('curve market cap needs both a price and the supply — else null', () => {
   assert.strictEqual(build({}, {}, {}, { priceUsd: 1 }).marketCap, null);
   assert.strictEqual(build({}, { totalSupply: '10', decimals: null }, {}, { priceUsd: 1 }).marketCap, null);
   assert.strictEqual(build({}, SUPPLY, {}, {}).marketCap, null);
+});
+
+// ── The reward asset is a setting, not a constant ────────────────────────────
+//
+// This launch is paired with a tokenized stock that has not been confirmed on
+// chain yet, so the asset lives in REWARD_TOKEN_ADDRESS/REWARD_SYMBOL. The
+// frontends in this lineage read the USD figure as `raw.<asset>Rewarded`, so
+// that key has to follow the setting — otherwise pointing the API at a
+// different stock leaves it publishing the number under the old asset's name.
+
+test('the <asset>Rewarded alias is named after the configured reward ticker', () => {
+  const out = buildStats({
+    market: {}, token: {}, rewards: { totalRewarded: 11 }, curve: {}, quote: { priceUsd: 3 },
+    symbol: 'RYZENINU', tokenAddress: '0xabc', rewardSymbol: 'NVDA',
+  });
+  assert.strictEqual(out.nvdaRewarded, 33);
+  assert.strictEqual(out.rewarded, 33); // the generic alias is always present
+  assert.strictEqual(out.rewardSymbol, 'NVDA'); // so the site can label the tile
+  assert.ok(!('amdRewarded' in out), 'must not also publish the previous asset name');
+});
+
+test('it defaults to AMD, so a frontend copied from the sibling launch still works', () => {
+  const out = build({}, {}, { totalRewarded: 11 }, {}, { priceUsd: 3 });
+  assert.strictEqual(out.amdRewarded, 33);
+  assert.strictEqual(out.rewardSymbol, 'AMD');
 });

@@ -22,7 +22,7 @@ async function main() {
   console.log(`  explorer   : ${config.explorerApi}`);
   console.log(`  dexscreener: chain "${config.dexscreenerChainId}"`);
   console.log(`  pons api   : ${config.ponsApi}`);
-  console.log(`  reward     : AMD ${config.rewardTokenAddress} (${config.rewardDecimals} decimals)`);
+  console.log(`  reward     : ${config.rewardSymbol} ${config.rewardTokenAddress} (${config.rewardDecimals} decimals)`);
   console.log(`  distributor: ${config.distributorAddress || '(resolved from Pons)'}`);
   console.log(`  cors       : ${config.corsOrigins.join(', ')}`);
   console.log(`  port       : ${config.port}`);
@@ -62,18 +62,18 @@ async function main() {
   }
   console.log('');
 
-  console.log('dexscreener (AMD/USD)');
+  console.log(`dexscreener (${config.rewardSymbol}/USD)`);
   if (quote.status === 'rejected') console.log(`  FAILED: ${quote.reason.message}`);
   else console.log(`  priceUsd   : ${quote.value.priceUsd}`);
   console.log('');
 
-  console.log('pons curve (pre-graduation price, via AMD/USD)');
+  console.log(`pons curve (pre-graduation price, via ${config.rewardSymbol}/USD)`);
   if (curve.status === 'rejected') console.log(`  FAILED: ${curve.reason.message}`);
-  else if (curve.value.priceUsd === null) console.log('  no curve price (no trades, or AMD unlisted)');
+  else if (curve.value.priceUsd === null) console.log(`  no curve price (no trades, or ${config.rewardSymbol} unlisted)`);
   else console.log(`  priceUsd   : ${curve.value.priceUsd}`);
   console.log('');
 
-  console.log('pons fee distributor (total AMD rewarded)');
+  console.log(`pons fee distributor (total ${config.rewardSymbol} rewarded)`);
   if (rewards.status === 'rejected') console.log(`  FAILED: ${rewards.reason.message}`);
   else if (rewards.value.distributor === null) console.log('  no distributor found for this token yet');
   else {
@@ -88,7 +88,7 @@ async function main() {
   else {
     for (const r of feed.value.rows) {
       const when = r.at === null ? '—' : new Date(r.at).toISOString();
-      console.log(`  +${r.amount} AMD -> ${r.wallet}  ${when}  ${r.txHash}`);
+      console.log(`  +${r.amount} ${config.rewardSymbol} -> ${r.wallet}  ${when}  ${r.txHash}`);
     }
     console.log(`  nextCursor : ${show(feed.value.nextCursor)}`);
   }
@@ -105,6 +105,7 @@ async function main() {
         quote: quote.status === 'fulfilled' ? quote.value : {},
         symbol: config.tokenSymbol,
         tokenAddress: config.tokenAddress,
+        rewardSymbol: config.rewardSymbol,
       }),
       null,
       2

@@ -1,18 +1,20 @@
 'use strict';
 
-// Total AMD rewarded to holders, from the Pons fee distributor.
+// Total reward asset paid to holders, from the Pons fee distributor.
 //
-// RYZENKITTY launches on the Pons V2 launchpad paired with AMD (tokenized AMD
-// stock). Its 2% creator tax accrues in AMD and routes — with no creator
-// claim — to a per-token fee distributor contract, which pushes epoch-based
-// payouts straight to holder wallets. The cumulative "paid to holders" number
+// RYZENINU launches on the Pons V2 launchpad paired with a tokenized stock
+// (AMD by default — see REWARD_TOKEN_ADDRESS). Its creator tax accrues in that
+// asset and routes — with no creator claim — to a per-token fee distributor
+// contract, which pushes epoch-based payouts straight to holder wallets. This
+// project never claims or pays anything itself; it only reports what pons's
+// distributor already did. The cumulative "paid to holders" number
 // has no single on-chain getter (the contract is epoch-based; Pons sums it
 // server-side), so this reads the same public API the Pons token page uses:
 //
 //   GET {ponsApi}/api/pons-v2-market/{token}/distributor
 //   -> { state, distributor, distributedQuote, ... }   (wei strings)
 //
-// `distributedQuote` is the AMD total, scaled here by REWARD_DECIMALS.
+// `distributedQuote` is the reward-asset total, scaled here by REWARD_DECIMALS.
 // The value is exposed as a TOKEN amount, deliberately not converted to USD.
 // Pre-launch (no token address) or no distributor: null, never 0 — the site
 // hides a null tile. A zero from an active distributor is a REAL zero (no

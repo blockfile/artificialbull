@@ -1,9 +1,9 @@
 {
-  "name": "ryzenkitty-api",
+  "name": "ryzeninu-api",
   "version": "1.0.0",
   "private": true,
-  "description": "Stats API for the RyzenKitty site — serves RYZEN market cap, holder count, total AMD rewarded and the live rewards feed.",
-  "homepage": "https://ryzenkitty.meme",
+  "description": "Read-only stats API for the Ryzen Inu site — market cap, holders, and what pons's fee distributor has paid holders. Distributes nothing itself.",
+  "homepage": "https://ryzeninu.com",
   "type": "commonjs",
   "main": "server.js",
   "scripts": {
