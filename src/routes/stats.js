@@ -10,9 +10,9 @@
 // The remaining fields are aliases and extras for sites built from the other
 // templates in this lineage (`<asset>Rewarded`/`rewarded` = USD figure, `price`,
 // `holders`), so any of those frontends works against this API unchanged. The
-// `<asset>` half of that alias is built from REWARD_SYMBOL, so a site copied
-// from the AMD-paired sibling still finds `amdRewarded`, while a launch paired
-// with a different stock gets an alias naming the asset it actually pays.
+// `<asset>` half of that alias is built from REWARD_SYMBOL — `nvdaRewarded`
+// here, `amdRewarded` on the AMD-paired Ryzen siblings — so the field always
+// names the asset the launch actually pays.
 // A field that cannot be sourced is null, never 0 — the site renders a null
 // as "—", but would render a 0 as a real number.
 
@@ -88,7 +88,7 @@ function buildStats({
   symbol,
   tokenAddress,
   supply = null,
-  rewardSymbol = 'AMD',
+  rewardSymbol = 'NVDA',
 }) {
   const token = withSupplyFallback(explorerToken, supply);
   const priceUsd = market.priceUsd ?? curve.priceUsd ?? null;
@@ -141,19 +141,19 @@ router.get('/stats', async (req, res, next) => {
     const quote = quoteResult.status === 'fulfilled' ? quoteResult.value : {};
 
     if (marketResult.status === 'rejected') {
-      console.warn('[ryzeninu] market data unavailable:', marketResult.reason?.message);
+      console.warn('[artificialbull] market data unavailable:', marketResult.reason?.message);
     }
     if (tokenResult.status === 'rejected') {
-      console.warn('[ryzeninu] holder count unavailable:', tokenResult.reason?.message);
+      console.warn('[artificialbull] holder count unavailable:', tokenResult.reason?.message);
     }
     if (rewardsResult.status === 'rejected') {
-      console.warn('[ryzeninu] rewards unavailable:', rewardsResult.reason?.message);
+      console.warn('[artificialbull] rewards unavailable:', rewardsResult.reason?.message);
     }
     if (curveResult.status === 'rejected') {
-      console.warn('[ryzeninu] curve price unavailable:', curveResult.reason?.message);
+      console.warn('[artificialbull] curve price unavailable:', curveResult.reason?.message);
     }
     if (quoteResult.status === 'rejected') {
-      console.warn(`[ryzeninu] ${config.rewardSymbol} price unavailable:`, quoteResult.reason?.message);
+      console.warn(`[artificialbull] ${config.rewardSymbol} price unavailable:`, quoteResult.reason?.message);
     }
 
     res.json(

@@ -2,8 +2,8 @@
 
 // Total reward asset paid to holders, from the Pons fee distributor.
 //
-// RYZENINU launches on the Pons V2 launchpad paired with a tokenized stock
-// (AMD by default — see REWARD_TOKEN_ADDRESS). Its creator tax accrues in that
+// ABULL launches on the Pons V2 launchpad paired with a tokenized stock
+// (NVDA — see REWARD_TOKEN_ADDRESS). Its creator tax accrues in that
 // asset and routes — with no creator claim — to a per-token fee distributor
 // contract, which pushes epoch-based payouts straight to holder wallets. This
 // project never claims or pays anything itself; it only reports what pons's

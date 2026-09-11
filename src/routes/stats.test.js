@@ -5,7 +5,7 @@ const assert = require('node:assert');
 const { buildStats, supplyFallback, withSupplyFallback } = require('./stats');
 
 const build = (market, token, rewards = {}, curve = {}, quote = {}, supply = null) =>
-  buildStats({ market, token, rewards, curve, quote, symbol: 'RYZENINU', tokenAddress: '0xabc', supply });
+  buildStats({ market, token, rewards, curve, quote, symbol: 'ABULL', tokenAddress: '0xabc', supply });
 
 // Blockscout-shaped supply: 1B tokens at 18 decimals.
 const SUPPLY = { totalSupply: '1000000000000000000000000000', decimals: 18 };
@@ -42,12 +42,12 @@ test('the fallback fills only the missing halves and leaves holders alone', () =
 test('returns the fields the site\'s BOOT window reads', () => {
   const out = build({ marketCap: 4_206_900 }, { holders: 6942 }, { totalRewarded: 826.7 }, {}, { priceUsd: 259.4 });
   assert.strictEqual(out.marketCap, 4_206_900);
-  assert.strictEqual(out.ketDistributed, 826.7); // "Total $AMD Distributed" — token amount, no "$"
+  assert.strictEqual(out.ketDistributed, 826.7); // "Total $NVDA Distributed" — token amount, no "$"
   assert.strictEqual(out.totalHolders, 6942);
   // aliases for the other frontend templates
   assert.strictEqual(out.holders, 6942);
   assert.strictEqual(out.totalRewarded, 826.7);
-  assert.strictEqual(out.amdRewarded, 826.7 * 259.4);
+  assert.strictEqual(out.nvdaRewarded, 826.7 * 259.4);
 });
 
 test('ketDistributed and totalHolders are null (never 0) when unsourced, and keep a real 0', () => {
@@ -56,9 +56,9 @@ test('ketDistributed and totalHolders are null (never 0) when unsourced, and kee
   assert.strictEqual(build({}, {}, { totalRewarded: 0 }).ketDistributed, 0);
 });
 
-test('`rewarded` is the generic alias of amdRewarded, null when missing', () => {
+test('`rewarded` is the generic alias of nvdaRewarded, null when missing', () => {
   const out = build({}, {}, { totalRewarded: 11 }, {}, { priceUsd: 486.91 });
-  assert.strictEqual(out.rewarded, out.amdRewarded);
+  assert.strictEqual(out.rewarded, out.nvdaRewarded);
   assert.strictEqual(build({}, {}).rewarded, null);
 });
 
@@ -76,7 +76,7 @@ test('a dead upstream yields nulls, never zeros', () => {
   const out = build({}, {});
   assert.strictEqual(out.marketCap, null);
   assert.strictEqual(out.holders, null);
-  assert.strictEqual(out.amdRewarded, null);
+  assert.strictEqual(out.nvdaRewarded, null);
   assert.strictEqual(out.price, null);
 });
 
@@ -85,7 +85,7 @@ test('a real zero market cap is preserved, not treated as missing', () => {
   assert.strictEqual(out.marketCap, 0);
 });
 
-test('includes the total AMD rewarded from the distributor service', () => {
+test('includes the total NVDA rewarded from the distributor service', () => {
   const out = build({}, {}, { totalRewarded: 826.5 });
   assert.strictEqual(out.totalRewarded, 826.5);
 });
@@ -118,21 +118,21 @@ test('curve market cap loses to DexScreener and the explorer figure', () => {
   assert.strictEqual(build({}, { ...SUPPLY, circulatingMarketCap: 7 }, {}, { priceUsd: 1 }).marketCap, 7);
 });
 
-test('totalRewardedUsd is the AMD amount at the AMD/USD price', () => {
+test('totalRewardedUsd is the NVDA amount at the NVDA/USD price', () => {
   const out = build({}, {}, { totalRewarded: 11 }, {}, { priceUsd: 259.4 });
   assert.strictEqual(out.totalRewardedUsd, 11 * 259.4);
 });
 
-test('`amdRewarded` — the tile the site formats as dollars — is the USD figure', () => {
+test('`nvdaRewarded` — the tile the site formats as dollars — is the USD figure', () => {
   const out = build({}, {}, { totalRewarded: 11 }, {}, { priceUsd: 259.4 });
-  assert.strictEqual(out.amdRewarded, out.totalRewardedUsd);
+  assert.strictEqual(out.nvdaRewarded, out.totalRewardedUsd);
 });
 
 test('totalRewardedUsd needs both legs, and a real zero stays 0', () => {
   assert.strictEqual(build({}, {}, { totalRewarded: 11 }).totalRewardedUsd, null);
   assert.strictEqual(build({}, {}, {}, {}, { priceUsd: 259.4 }).totalRewardedUsd, null);
   assert.strictEqual(build({}, {}, { totalRewarded: 0 }, {}, { priceUsd: 259.4 }).totalRewardedUsd, 0);
-  assert.strictEqual(build({}, {}, { totalRewarded: 0 }, {}, { priceUsd: 259.4 }).amdRewarded, 0);
+  assert.strictEqual(build({}, {}, { totalRewarded: 0 }, {}, { priceUsd: 259.4 }).nvdaRewarded, 0);
 });
 
 test('curve market cap needs both a price and the supply — else null', () => {
@@ -143,25 +143,25 @@ test('curve market cap needs both a price and the supply — else null', () => {
 
 // ── The reward asset is a setting, not a constant ────────────────────────────
 //
-// This launch is paired with a tokenized stock that has not been confirmed on
-// chain yet, so the asset lives in REWARD_TOKEN_ADDRESS/REWARD_SYMBOL. The
-// frontends in this lineage read the USD figure as `raw.<asset>Rewarded`, so
-// that key has to follow the setting — otherwise pointing the API at a
+// The asset lives in REWARD_TOKEN_ADDRESS/REWARD_SYMBOL, because the forks in
+// this lineage pair with different tokenized stocks (NVDA here, AMD on the
+// Ryzen siblings). The frontends read the USD figure as `raw.<asset>Rewarded`,
+// so that key has to follow the setting — otherwise pointing the API at a
 // different stock leaves it publishing the number under the old asset's name.
 
 test('the <asset>Rewarded alias is named after the configured reward ticker', () => {
   const out = buildStats({
     market: {}, token: {}, rewards: { totalRewarded: 11 }, curve: {}, quote: { priceUsd: 3 },
-    symbol: 'RYZENINU', tokenAddress: '0xabc', rewardSymbol: 'NVDA',
+    symbol: 'ABULL', tokenAddress: '0xabc', rewardSymbol: 'AMD',
   });
-  assert.strictEqual(out.nvdaRewarded, 33);
+  assert.strictEqual(out.amdRewarded, 33);
   assert.strictEqual(out.rewarded, 33); // the generic alias is always present
-  assert.strictEqual(out.rewardSymbol, 'NVDA'); // so the site can label the tile
-  assert.ok(!('amdRewarded' in out), 'must not also publish the previous asset name');
+  assert.strictEqual(out.rewardSymbol, 'AMD'); // so the site can label the tile
+  assert.ok(!('nvdaRewarded' in out), 'must not also publish the default asset name');
 });
 
-test('it defaults to AMD, so a frontend copied from the sibling launch still works', () => {
+test('it defaults to NVDA, the stock this launch is paired with', () => {
   const out = build({}, {}, { totalRewarded: 11 }, {}, { priceUsd: 3 });
-  assert.strictEqual(out.amdRewarded, 33);
-  assert.strictEqual(out.rewardSymbol, 'AMD');
+  assert.strictEqual(out.nvdaRewarded, 33);
+  assert.strictEqual(out.rewardSymbol, 'NVDA');
 });

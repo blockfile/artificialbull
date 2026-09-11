@@ -1,12 +1,17 @@
-# Deploying ryzeninu-api to Ubuntu 24.04
+# Deploying artificialbull-api to Ubuntu 24.04
 
-Site: **https://ryzeninu.com** · API: **https://api.ryzeninu.com**
+Site: **https://artificialbull.example** · API: **https://api.artificialbull.example**
 
-**One** PM2 process out of `/var/www/ryzeninu`:
+> **No domain yet.** `artificialbull.example` is a placeholder — `.example` can
+> never resolve, so nothing below can half-work against the wrong host. Once the
+> domain is bought, substitute it everywhere in this file before you start (and
+> in `.env`'s `CORS_ORIGINS`), e.g. `sed 's/artificialbull.example/yourdomain.com/g' DEPLOY.md`.
+
+**One** PM2 process out of `/var/www/artificialbull`:
 
 | Process | Port | Reachable from |
 | --- | --- | --- |
-| `ryzeninu-api` (`server.js`) | 3000 | the internet, via nginx → `api.ryzeninu.com` |
+| `artificialbull-api` (`server.js`) | 3000 | the internet, via nginx → `api.artificialbull.example` |
 
 That is the whole deployment. There is no bot, no MongoDB, no wallet key and no
 on-chain contract to deploy, because **this project distributes nothing**. Pons's
@@ -20,8 +25,8 @@ Everything runs as **root**. One account, one pm2 daemon: pm2 keeps a separate
 daemon per user, and mixing accounts is what leaves `pm2 list` empty while the
 API is actually running.
 
-**Before you start:** point a DNS `A` record for `api.ryzeninu.com` at the
-server's public IP and let it propagate (`dig +short api.ryzeninu.com`).
+**Before you start:** point a DNS `A` record for `api.artificialbull.example` at the
+server's public IP and let it propagate (`dig +short api.artificialbull.example`).
 Certbot cannot issue a certificate until it resolves.
 
 ## 1. Base prep
@@ -69,8 +74,8 @@ pm2 -v
 ```bash
 mkdir -p /var/www
 cd /var/www
-git clone https://github.com/blockfile/ryzeninu.git ryzeninu
-cd ryzeninu
+git clone https://github.com/blockfile/artificialbull.git artificialbull
+cd artificialbull
 npm ci --omit=dev
 ```
 
@@ -93,18 +98,14 @@ The only lines that must change from the committed example:
 # errors — do not invent a placeholder address to make the tiles fill in.
 TOKEN_ADDRESS=
 
-# The tokenized stock the curve is quoted in, which is also what holders are
-# paid. CONFIRM IT on the token's pons page before go-live — the default here
-# is AMD because the sibling Ryzen launch pairs with AMD, but the pair is fixed
-# when the token is created. Wrong values do not crash anything; they price the
-# curve off the wrong stock and read an empty payout feed, which looks exactly
-# like "not launched yet".
-REWARD_TOKEN_ADDRESS=0x86923f96303d656e4aa86d9d42d1e57ad2023fdc
-REWARD_SYMBOL=AMD
+# Already correct — NVDA, verified on chain. Leave these alone unless the
+# token turns out to be paired with a different stock (the pons page says).
+REWARD_TOKEN_ADDRESS=0xd0601ce157db5bdc3162bbac2a2c8af5320d9eec
+REWARD_SYMBOL=NVDA
 
 # Must contain the site's origin EXACTLY, scheme included, or the browser gets
 # a 403 and the site falls back to placeholder numbers against a working API.
-CORS_ORIGINS=https://ryzeninu.com,https://www.ryzeninu.com
+CORS_ORIGINS=https://artificialbull.example,https://www.artificialbull.example
 ```
 
 Then check it before starting anything. This calls every upstream once and
@@ -118,12 +119,12 @@ npm run check
 ## 6. PM2
 
 ```bash
-cd /var/www/ryzeninu
-pm2 start server.js --name ryzeninu-api --time
+cd /var/www/artificialbull
+pm2 start server.js --name artificialbull-api --time
 pm2 save
 pm2 startup systemd -u root --hp /root      # then run the line it prints
 pm2 list
-pm2 logs ryzeninu-api --lines 30
+pm2 logs artificialbull-api --lines 30
 ```
 
 ## 7. nginx
@@ -131,14 +132,14 @@ pm2 logs ryzeninu-api --lines 30
 ```bash
 apt install -y nginx
 
-tee /etc/nginx/sites-available/api.ryzeninu.com > /dev/null <<'NGINX'
+tee /etc/nginx/sites-available/api.artificialbull.example > /dev/null <<'NGINX'
 server {
     listen 80;
     listen [::]:80;
-    server_name api.ryzeninu.com;
+    server_name api.artificialbull.example;
 
-    access_log /var/log/nginx/ryzeninu.access.log;
-    error_log  /var/log/nginx/ryzeninu.error.log;
+    access_log /var/log/nginx/artificialbull.access.log;
+    error_log  /var/log/nginx/artificialbull.error.log;
 
     client_max_body_size 1m;
 
@@ -154,24 +155,24 @@ server {
 }
 NGINX
 
-ln -s /etc/nginx/sites-available/api.ryzeninu.com /etc/nginx/sites-enabled/
+ln -s /etc/nginx/sites-available/api.artificialbull.example /etc/nginx/sites-enabled/
 rm -f /etc/nginx/sites-enabled/default
 nginx -t
 systemctl reload nginx
-curl http://api.ryzeninu.com/health
+curl http://api.artificialbull.example/health
 ```
 
 ## 8. Certbot / HTTPS
 
-The site is HTTPS, so the API must be — a browser on `https://ryzeninu.com`
-refuses to fetch `http://api.ryzeninu.com` as mixed content.
+The site is HTTPS, so the API must be — a browser on `https://artificialbull.example`
+refuses to fetch `http://api.artificialbull.example` as mixed content.
 
 ```bash
 snap install core && snap refresh core
 snap install --classic certbot
 ln -sf /snap/bin/certbot /usr/bin/certbot
 
-certbot --nginx -d api.ryzeninu.com --redirect \
+certbot --nginx -d api.artificialbull.example --redirect \
   -m you@example.com --agree-tos --no-eff-email
 
 certbot renew --dry-run
@@ -181,14 +182,14 @@ systemctl list-timers | grep certbot
 ## 9. Verify
 
 ```bash
-curl https://api.ryzeninu.com/health
-curl https://api.ryzeninu.com/token
-curl https://api.ryzeninu.com/stats
-curl "https://api.ryzeninu.com/rewards?limit=5"
+curl https://api.artificialbull.example/health
+curl https://api.artificialbull.example/token
+curl https://api.artificialbull.example/stats
+curl "https://api.artificialbull.example/rewards?limit=5"
 
 # CORS — must echo the site's origin back
-curl -s -H "Origin: https://ryzeninu.com" -D- -o /dev/null \
-  https://api.ryzeninu.com/stats | grep -i access-control-allow-origin
+curl -s -H "Origin: https://artificialbull.example" -D- -o /dev/null \
+  https://api.artificialbull.example/stats | grep -i access-control-allow-origin
 ```
 
 A 403 on the CORS check means the origin is missing from `CORS_ORIGINS` — the
@@ -199,7 +200,7 @@ answering an empty `transactions` array is **correct**, not a failure. Both are
 also what a wrong `TOKEN_ADDRESS` looks like, so confirm with `npm run check`
 rather than by staring at the JSON.
 
-Then point the site at it (`VITE_API_BASE_URL=https://api.ryzeninu.com`,
+Then point the site at it (`VITE_API_BASE_URL=https://api.artificialbull.example`,
 `VITE_USE_MOCK=false`) and redeploy the frontend.
 
 ## At launch
@@ -207,11 +208,11 @@ Then point the site at it (`VITE_API_BASE_URL=https://api.ryzeninu.com`,
 Once the token is created on Pons:
 
 ```bash
-cd /var/www/ryzeninu
-nano .env                # set TOKEN_ADDRESS; confirm REWARD_TOKEN_ADDRESS/REWARD_SYMBOL
+cd /var/www/artificialbull
+nano .env                # set TOKEN_ADDRESS
 npm run check            # distributor found? curve price sane? feed rows real?
-pm2 restart ryzeninu-api
-curl https://api.ryzeninu.com/stats
+pm2 restart artificialbull-api
+curl https://api.artificialbull.example/stats
 ```
 
 `npm run check` prints the distributor address Pons resolved for the token. If
@@ -223,10 +224,10 @@ a launchpad choice, not a deployment problem.
 ## Redeploying
 
 ```bash
-cd /var/www/ryzeninu
+cd /var/www/artificialbull
 git pull
 npm ci --omit=dev
-pm2 restart ryzeninu-api
-pm2 logs ryzeninu-api --lines 30
-curl https://api.ryzeninu.com/health
+pm2 restart artificialbull-api
+pm2 logs artificialbull-api --lines 30
+curl https://api.artificialbull.example/health
 ```

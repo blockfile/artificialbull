@@ -1,13 +1,13 @@
-# ryzeninu-api
+# artificialbull-api
 
-Read-only stats API for **Ryzen Inu** (`$RYZENINU`, Robinhood Chain, Pons V2).
-Serves the site at **ryzeninu.com** from **api.ryzeninu.com**.
+Read-only stats API for **Artificial Bull** (`$ABULL`, Robinhood Chain, Pons V2).
+Serves the site at **artificialbull.example** from **api.artificialbull.example**.
 
 ## What it does — and what it deliberately does not
 
 This project **reports**. It does not distribute.
 
-Ryzen Inu launches with Pons's holder fee-sharing switched on, so the creator
+Artificial Bull launches with Pons's holder fee-sharing switched on, so the creator
 tax routes straight to Pons's own per-token **fee distributor** contract, which
 pushes payouts to holder wallets on its own schedule. Nobody claims, swaps or
 sends anything by hand. This API's entire job is to show what that distributor
@@ -59,18 +59,22 @@ Reads are cached with stale-while-revalidate (`src/services/cache.js`): a failin
 upstream keeps serving its last good value instead of blanking a tile, and
 `/stats` degrades per-field — one dead upstream cannot take the others down.
 
-## The reward asset is a setting
+## Paired with NVDA
 
 Pons V2 tokens are paired with a tokenized stock, and that same asset is what
-holders are paid in. It defaults here to **AMD** (`0x86923f…3fdc`, 18 decimals)
-because that is what the sibling Ryzen launch pairs with — **confirm it on the
-token's Pons page before go-live** and override `REWARD_TOKEN_ADDRESS`,
-`REWARD_DECIMALS` and `REWARD_SYMBOL` if the pair differs.
+holders are paid in. Artificial Bull is paired with **NVDA** — "NVIDIA •
+Robinhood Token", `0xd0601ce1…9eec`, 18 decimals — verified on chain: Blockscout
+names it, it has ~146k holders, and it has multi-million-dollar USDG and WETH
+pools on DexScreener. There are impostor "NVDA" tokens on Robinhood Chain; if
+this address ever needs changing, copy it from the token's Pons page, never
+from a ticker search.
 
-`REWARD_SYMBOL` also names the `<asset>Rewarded` field in `/stats`
-(`AMD` → `amdRewarded`, `NVDA` → `nvdaRewarded`), alongside the always-present
-generic `rewarded`, so the API never publishes a figure under the name of an
-asset it is not reading.
+The asset is still a setting (`REWARD_TOKEN_ADDRESS`, `REWARD_DECIMALS`,
+`REWARD_SYMBOL`), because the forks in this lineage pair with different
+stocks. `REWARD_SYMBOL` also names the `<asset>Rewarded` field in `/stats` —
+`nvdaRewarded` here — alongside the always-present generic `rewarded` and
+`rewardSymbol`, so the API never publishes a figure under the name of an asset
+it is not reading.
 
 ## Running it
 
@@ -91,5 +95,7 @@ Deployment: see [DEPLOY.md](DEPLOY.md).
 
 ## Lineage
 
-Cloned from `ryzenkitty-api`, which came from `peccy-api`. Shared history, so
-`git cherry-pick <sha>` moves a fix between any of them.
+Cloned from `ryzeninu-api` (AMD-paired), which came from `ryzenkitty-api` and
+`peccy-api`. Shared history, so `git cherry-pick <sha>` moves a fix between any
+of them. The only difference from `ryzeninu-api` is the brand and the default
+reward asset.

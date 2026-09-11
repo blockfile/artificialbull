@@ -5,7 +5,10 @@ const assert = require('node:assert');
 const config = require('../config');
 const { requireQuotePrice, fetchQuotePrice } = require('./quoteprice');
 
-// A DexScreener payload listing AMD (config.rewardTokenAddress) on our chain.
+// A DexScreener payload listing the reward asset (config.rewardTokenAddress) on our chain.
+// The error message names config.rewardSymbol, so the assertions match THAT —
+// a literal ticker here is what broke when this fork switched AMD for NVDA.
+const NAMES_ASSET = new RegExp(`${config.rewardSymbol} price unavailable`);
 const listed = {
   pairs: [{ chainId: config.dexscreenerChainId, baseToken: { address: config.rewardTokenAddress }, priceUsd: '135.4', liquidity: { usd: 1 } }],
 };
@@ -23,15 +26,15 @@ test('retries a glitched empty DexScreener answer before giving up', async () =>
 test('throws only after every attempt came back empty', async () => {
   let calls = 0;
   const fetchFn = async () => { calls += 1; return glitched; };
-  await assert.rejects(fetchQuotePrice({ fetchFn, sleepFn: async () => {} }), /AMD/);
+  await assert.rejects(fetchQuotePrice({ fetchFn, sleepFn: async () => {} }), NAMES_ASSET);
   assert.strictEqual(calls, 3);
 });
 
-test('passes a listed AMD price through', () => {
+test('passes a listed quote price through', () => {
   assert.deepStrictEqual(requireQuotePrice({ priceUsd: 135.4 }), { priceUsd: 135.4 });
 });
 
-test('an unlisted AMD is an upstream glitch, not a real state — it throws', () => {
-  assert.throws(() => requireQuotePrice({ priceUsd: null }), /AMD/);
-  assert.throws(() => requireQuotePrice({}), /AMD/);
+test('an unlisted quote asset is an upstream glitch, not a real state — it throws', () => {
+  assert.throws(() => requireQuotePrice({ priceUsd: null }), NAMES_ASSET);
+  assert.throws(() => requireQuotePrice({}), NAMES_ASSET);
 });

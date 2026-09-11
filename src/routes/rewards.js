@@ -72,7 +72,7 @@ router.get('/rewards', async (req, res) => {
   } catch (err) {
     // Nothing cached for this page and the upstream is down. A 502 makes the
     // site show its retry state; an empty 200 would read as "no payouts yet".
-    console.warn('[ryzeninu] rewards feed unavailable:', err.message);
+    console.warn('[artificialbull] rewards feed unavailable:', err.message);
     res.status(502).json({ error: 'rewards feed unavailable' });
   }
 });

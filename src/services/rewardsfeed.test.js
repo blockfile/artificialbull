@@ -18,7 +18,7 @@ const item = (over = {}) => ({
   method: '0x16b2290f',
   from: { hash: DIST },
   to: { hash: '0xfF335B2C27f66910E67808382dE6A1fd2389321d' },
-  token: { address: '0x86923f96303D656E4aa86D9d42D1e57ad2023fdC', symbol: 'AMD', decimals: '18' },
+  token: { address: '0xd0601CE157db5bDC3162bBAC2A2c8aF5320D9EEc', symbol: 'NVDA', decimals: '18' },
   total: { decimals: '18', value: '311868936472759' },
   ...over,
 });
@@ -122,7 +122,7 @@ test('a malformed response throws so the cache keeps the last good page', () => 
 
 test('asks Blockscout for reward-token transfers OUT of the distributor, after the cursor', () => {
   const base = 'https://robinhoodchain.blockscout.com';
-  const token = '0x86923f96303d656e4aa86d9d42d1e57ad2023fdc';
+  const token = '0xd0601ce157db5bdc3162bbac2a2c8af5320d9eec';
   const top = new URL(feedUrl(base, DIST, token, null));
   assert.strictEqual(top.pathname, `/api/v2/addresses/${DIST}/token-transfers`);
   assert.strictEqual(top.searchParams.get('type'), 'ERC-20');

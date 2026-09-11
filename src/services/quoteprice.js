@@ -1,7 +1,7 @@
 'use strict';
 
-// Quote/USD — the price of the tokenized stock RYZENINU is paired with and
-// that holder rewards are paid in (AMD by default; REWARD_TOKEN_ADDRESS and
+// Quote/USD — the price of the tokenized stock ABULL is paired with and
+// that holder rewards are paid in (NVDA; REWARD_TOKEN_ADDRESS and
 // REWARD_SYMBOL name it). Two consumers share this one cached read: the
 // bonding-curve market cap (the curve price is denominated in the quote asset)
 // and the USD figure for rewards paid out. These tokenized stocks have deep
