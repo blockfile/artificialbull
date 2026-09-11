@@ -1,17 +1,12 @@
 # Deploying artificialbull-api to Ubuntu 24.04
 
-Site: **https://artificialbull.example** · API: **https://api.artificialbull.example**
-
-> **No domain yet.** `artificialbull.example` is a placeholder — `.example` can
-> never resolve, so nothing below can half-work against the wrong host. Once the
-> domain is bought, substitute it everywhere in this file before you start (and
-> in `.env`'s `CORS_ORIGINS`), e.g. `sed 's/artificialbull.example/yourdomain.com/g' DEPLOY.md`.
+Site: **https://artificialbull.com** · API: **https://api.artificialbull.com**
 
 **One** PM2 process out of `/var/www/artificialbull`:
 
 | Process | Port | Reachable from |
 | --- | --- | --- |
-| `artificialbull-api` (`server.js`) | 3000 | the internet, via nginx → `api.artificialbull.example` |
+| `artificialbull-api` (`server.js`) | 3000 | the internet, via nginx → `api.artificialbull.com` |
 
 That is the whole deployment. There is no bot, no MongoDB, no wallet key and no
 on-chain contract to deploy, because **this project distributes nothing**. Pons's
@@ -25,8 +20,8 @@ Everything runs as **root**. One account, one pm2 daemon: pm2 keeps a separate
 daemon per user, and mixing accounts is what leaves `pm2 list` empty while the
 API is actually running.
 
-**Before you start:** point a DNS `A` record for `api.artificialbull.example` at the
-server's public IP and let it propagate (`dig +short api.artificialbull.example`).
+**Before you start:** point a DNS `A` record for `api.artificialbull.com` at the
+server's public IP and let it propagate (`dig +short api.artificialbull.com`).
 Certbot cannot issue a certificate until it resolves.
 
 ## 1. Base prep
@@ -105,7 +100,7 @@ REWARD_SYMBOL=NVDA
 
 # Must contain the site's origin EXACTLY, scheme included, or the browser gets
 # a 403 and the site falls back to placeholder numbers against a working API.
-CORS_ORIGINS=https://artificialbull.example,https://www.artificialbull.example
+CORS_ORIGINS=https://artificialbull.com,https://www.artificialbull.com
 ```
 
 Then check it before starting anything. This calls every upstream once and
@@ -132,11 +127,11 @@ pm2 logs artificialbull-api --lines 30
 ```bash
 apt install -y nginx
 
-tee /etc/nginx/sites-available/api.artificialbull.example > /dev/null <<'NGINX'
+tee /etc/nginx/sites-available/api.artificialbull.com > /dev/null <<'NGINX'
 server {
     listen 80;
     listen [::]:80;
-    server_name api.artificialbull.example;
+    server_name api.artificialbull.com;
 
     access_log /var/log/nginx/artificialbull.access.log;
     error_log  /var/log/nginx/artificialbull.error.log;
@@ -155,24 +150,24 @@ server {
 }
 NGINX
 
-ln -s /etc/nginx/sites-available/api.artificialbull.example /etc/nginx/sites-enabled/
+ln -s /etc/nginx/sites-available/api.artificialbull.com /etc/nginx/sites-enabled/
 rm -f /etc/nginx/sites-enabled/default
 nginx -t
 systemctl reload nginx
-curl http://api.artificialbull.example/health
+curl http://api.artificialbull.com/health
 ```
 
 ## 8. Certbot / HTTPS
 
-The site is HTTPS, so the API must be — a browser on `https://artificialbull.example`
-refuses to fetch `http://api.artificialbull.example` as mixed content.
+The site is HTTPS, so the API must be — a browser on `https://artificialbull.com`
+refuses to fetch `http://api.artificialbull.com` as mixed content.
 
 ```bash
 snap install core && snap refresh core
 snap install --classic certbot
 ln -sf /snap/bin/certbot /usr/bin/certbot
 
-certbot --nginx -d api.artificialbull.example --redirect \
+certbot --nginx -d api.artificialbull.com --redirect \
   -m you@example.com --agree-tos --no-eff-email
 
 certbot renew --dry-run
@@ -182,14 +177,14 @@ systemctl list-timers | grep certbot
 ## 9. Verify
 
 ```bash
-curl https://api.artificialbull.example/health
-curl https://api.artificialbull.example/token
-curl https://api.artificialbull.example/stats
-curl "https://api.artificialbull.example/rewards?limit=5"
+curl https://api.artificialbull.com/health
+curl https://api.artificialbull.com/token
+curl https://api.artificialbull.com/stats
+curl "https://api.artificialbull.com/rewards?limit=5"
 
 # CORS — must echo the site's origin back
-curl -s -H "Origin: https://artificialbull.example" -D- -o /dev/null \
-  https://api.artificialbull.example/stats | grep -i access-control-allow-origin
+curl -s -H "Origin: https://artificialbull.com" -D- -o /dev/null \
+  https://api.artificialbull.com/stats | grep -i access-control-allow-origin
 ```
 
 A 403 on the CORS check means the origin is missing from `CORS_ORIGINS` — the
@@ -200,7 +195,7 @@ answering an empty `transactions` array is **correct**, not a failure. Both are
 also what a wrong `TOKEN_ADDRESS` looks like, so confirm with `npm run check`
 rather than by staring at the JSON.
 
-Then point the site at it (`VITE_API_BASE_URL=https://api.artificialbull.example`,
+Then point the site at it (`VITE_API_BASE_URL=https://api.artificialbull.com`,
 `VITE_USE_MOCK=false`) and redeploy the frontend.
 
 ## At launch
@@ -212,7 +207,7 @@ cd /var/www/artificialbull
 nano .env                # set TOKEN_ADDRESS
 npm run check            # distributor found? curve price sane? feed rows real?
 pm2 restart artificialbull-api
-curl https://api.artificialbull.example/stats
+curl https://api.artificialbull.com/stats
 ```
 
 `npm run check` prints the distributor address Pons resolved for the token. If
@@ -229,5 +224,5 @@ git pull
 npm ci --omit=dev
 pm2 restart artificialbull-api
 pm2 logs artificialbull-api --lines 30
-curl https://api.artificialbull.example/health
+curl https://api.artificialbull.com/health
 ```

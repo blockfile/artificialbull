@@ -1,7 +1,7 @@
 # artificialbull-api — Design
 
 **Date:** 2026-09-11
-**Status:** built, pre-launch (no CA, no domain yet)
+**Status:** built, pre-launch (no CA yet)
 
 ## What this is
 
@@ -20,16 +20,12 @@ the reporting family and not the distributing one.
 | --- | --- |
 | `ryzeninu-api`, log prefix `[ryzeninu]` | `artificialbull-api`, `[artificialbull]` |
 | `RYZENINU` / `Ryzen Inu` | `BULL` / `Artificial Bull` |
-| `ryzeninu.com` | `artificialbull.example` — **placeholder**, no domain yet |
+| `ryzeninu.com` | `artificialbull.com` |
 | reward default AMD `0x86923f…3fdc`, flagged "unconfirmed" | **NVDA** `0xd0601ce1…9eec`, verified |
 | `REWARD_SYMBOL=AMD` → `/stats.amdRewarded` | `REWARD_SYMBOL=NVDA` → `/stats.nvdaRewarded` |
 
 The ticker is **$BULL** — not the `$A…` pattern of `$ASHIBA`/`$ADOGE`. It is one env var,
 `TOKEN_SYMBOL`, and the site shows whatever `/token` serves, so it must match.
-
-`.example` is used for the domain, as in artidoge: it is reserved and can never
-resolve, so a DEPLOY step run before the substitution fails loudly instead of
-half-working against someone else's host.
 
 ## NVDA verification (2026-09-11)
 
@@ -61,7 +57,7 @@ ryzeninu too, but it is harmless there (its default is AMD) and was left alone.
 ## Open at hand-off
 
 1. **No CA** — `TOKEN_ADDRESS` blank; every stat answers null by design.
-2. **No domain** — replace `artificialbull.example` in `.env` and `DEPLOY.md`.
+2. **Domain** — `artificialbull.com`, API at `api.artificialbull.com`; needs its DNS A record before certbot.
 3. **Holder fee-sharing must be switched on at creation**, or there is no
    distributor and the rewards tile stays empty permanently. `npm run check`
    says which.

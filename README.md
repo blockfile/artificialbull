@@ -1,7 +1,7 @@
 # artificialbull-api
 
 Read-only stats API for **Artificial Bull** (`$BULL`, Robinhood Chain, Pons V2).
-Serves the site at **artificialbull.example** from **api.artificialbull.example**.
+Serves the site at **artificialbull.com** from **api.artificialbull.com**.
 
 ## What it does — and what it deliberately does not
 
