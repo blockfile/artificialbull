@@ -14,11 +14,11 @@ const explorerApi = (process.env.EXPLORER_API || 'https://robinhoodchain.blocksc
 const config = {
   port: num(process.env.PORT, 3000),
 
-  // ABULL's contract address. Blank until the token is launched — every stat
+  // BULL's contract address. Blank until the token is launched — every stat
   // then resolves to null, which the site renders as "—" rather than a zero.
   tokenAddress: lowerOrNull(process.env.TOKEN_ADDRESS),
-  // The site's ticker is $ABULL (SITE.ticker in its config/site.js).
-  tokenSymbol: process.env.TOKEN_SYMBOL || 'ABULL',
+  // The site's ticker is $BULL (SITE.ticker in its config/site.js).
+  tokenSymbol: process.env.TOKEN_SYMBOL || 'BULL',
   tokenName: process.env.TOKEN_NAME || 'Artificial Bull',
   // Whole-token total supply, used ONLY to compute the pre-graduation market
   // cap when Blockscout (the normal source of supply + decimals) is
@@ -37,7 +37,7 @@ const config = {
   holdersTtlMs: num(process.env.HOLDERS_TTL_MS, 120_000),
 
   // ── Pons rewards ("Total <reward> Rewarded") ──────────────────────────────
-  // This launch does NOT distribute anything itself. ABULL's creator tax
+  // This launch does NOT distribute anything itself. BULL's creator tax
   // accrues in the curve's quote asset and routes — with no creator claim — to
   // pons's own per-token fee distributor, which pushes payouts straight to
   // holder wallets. Everything here just READS what pons already paid: the

@@ -30,7 +30,7 @@ app.use(
 app.get('/', (req, res) => {
   res.json({
     name: 'artificialbull-api',
-    description: `ABULL market cap, holder count, total ${config.rewardSymbol} rewarded by the pons fee distributor, and the live payout feed`,
+    description: `BULL market cap, holder count, total ${config.rewardSymbol} rewarded by the pons fee distributor, and the live payout feed`,
     token: { symbol: config.tokenSymbol, address: config.tokenAddress },
     endpoints: ['GET /token', 'GET /stats', 'GET /rewards?cursor&limit', 'GET /health'],
   });

@@ -5,7 +5,7 @@ const assert = require('node:assert');
 const { buildStats, supplyFallback, withSupplyFallback } = require('./stats');
 
 const build = (market, token, rewards = {}, curve = {}, quote = {}, supply = null) =>
-  buildStats({ market, token, rewards, curve, quote, symbol: 'ABULL', tokenAddress: '0xabc', supply });
+  buildStats({ market, token, rewards, curve, quote, symbol: 'BULL', tokenAddress: '0xabc', supply });
 
 // Blockscout-shaped supply: 1B tokens at 18 decimals.
 const SUPPLY = { totalSupply: '1000000000000000000000000000', decimals: 18 };
@@ -152,7 +152,7 @@ test('curve market cap needs both a price and the supply — else null', () => {
 test('the <asset>Rewarded alias is named after the configured reward ticker', () => {
   const out = buildStats({
     market: {}, token: {}, rewards: { totalRewarded: 11 }, curve: {}, quote: { priceUsd: 3 },
-    symbol: 'ABULL', tokenAddress: '0xabc', rewardSymbol: 'AMD',
+    symbol: 'BULL', tokenAddress: '0xabc', rewardSymbol: 'AMD',
   });
   assert.strictEqual(out.amdRewarded, 33);
   assert.strictEqual(out.rewarded, 33); // the generic alias is always present

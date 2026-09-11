@@ -1,6 +1,6 @@
 'use strict';
 
-// Market cap for ABULL, from DexScreener's public API (no key required).
+// Market cap for BULL, from DexScreener's public API (no key required).
 //
 // Returns nulls rather than throwing when the token isn't listed yet or the API
 // is unreachable, so /stats never breaks — the site hides a tile whose value is

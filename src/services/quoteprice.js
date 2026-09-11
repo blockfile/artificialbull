@@ -1,6 +1,6 @@
 'use strict';
 
-// Quote/USD — the price of the tokenized stock ABULL is paired with and
+// Quote/USD — the price of the tokenized stock BULL is paired with and
 // that holder rewards are paid in (NVDA; REWARD_TOKEN_ADDRESS and
 // REWARD_SYMBOL name it). Two consumers share this one cached read: the
 // bonding-curve market cap (the curve price is denominated in the quote asset)

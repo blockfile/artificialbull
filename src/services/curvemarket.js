@@ -1,22 +1,22 @@
 'use strict';
 
-// Pre-graduation ABULL price, computed from the Pons bonding curve.
+// Pre-graduation BULL price, computed from the Pons bonding curve.
 //
-// Until ABULL graduates off the Pons V2 bonding curve there is no Uniswap pool,
+// Until BULL graduates off the Pons V2 bonding curve there is no Uniswap pool,
 // so DexScreener has nothing to say about it. But the curve itself trades all
 // day, and Pons's chart API (same host as the rewards distributor API) reports
 // the curve price denominated in the quote asset — while that asset (a
 // tokenized stock — NVDA here) IS listed on DexScreener with deep pools.
-// Multiplying the two gives a real USD price for ABULL today:
+// Multiplying the two gives a real USD price for BULL today:
 //
 //   GET {ponsApi}/api/pons-v2-market/{token}/chart?range=1d
-//     -> { points: [{ t, price, ... }] }        price = quote per ABULL
+//     -> { points: [{ t, price, ... }] }        price = quote per BULL
 //   GET dexscreener /latest/dex/tokens/{quote}  -> quote price in USD
 //
 //   priceUsd = latest curve price × quote priceUsd
 //
 // /stats uses this as a FALLBACK: once the token graduates, the DexScreener
-// pair for ABULL itself takes over (see routes/stats.js merge order) and this
+// pair for BULL itself takes over (see routes/stats.js merge order) and this
 // service quietly stops mattering. No trades yet or an unlisted quote asset
 // degrade to null, never 0; malformed responses throw so the stale-while-error
 // cache keeps the last good value.
@@ -28,7 +28,7 @@ const { getQuotePrice } = require('./quoteprice');
 
 const EMPTY = { priceUsd: null };
 
-/** Pure: latest curve price (quote asset per ABULL) from a Pons chart payload, or null. */
+/** Pure: latest curve price (quote asset per BULL) from a Pons chart payload, or null. */
 function parseCurvePrice(data) {
   if (!data || typeof data !== 'object') {
     throw new Error(`malformed chart response: ${String(data).slice(0, 80)}`);

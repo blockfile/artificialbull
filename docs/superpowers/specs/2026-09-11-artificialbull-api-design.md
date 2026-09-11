@@ -5,7 +5,7 @@
 
 ## What this is
 
-Read-only stats API for **Artificial Bull** (`$ABULL`, Robinhood Chain, Pons V2).
+Read-only stats API for **Artificial Bull** (`$BULL`, Robinhood Chain, Pons V2).
 The ask: "recopy and rebrand the ryzeninu-api, same function, but paired with
 NVIDIA, not AMD". So: a clone of `ryzeninu-api` with history (reporting family —
 pons's own fee distributor pays holders, this project only reads it), rebranded,
@@ -19,13 +19,13 @@ the reporting family and not the distributing one.
 | ryzeninu-api | artificialbull-api |
 | --- | --- |
 | `ryzeninu-api`, log prefix `[ryzeninu]` | `artificialbull-api`, `[artificialbull]` |
-| `RYZENINU` / `Ryzen Inu` | `ABULL` / `Artificial Bull` |
+| `RYZENINU` / `Ryzen Inu` | `BULL` / `Artificial Bull` |
 | `ryzeninu.com` | `artificialbull.example` — **placeholder**, no domain yet |
 | reward default AMD `0x86923f…3fdc`, flagged "unconfirmed" | **NVDA** `0xd0601ce1…9eec`, verified |
 | `REWARD_SYMBOL=AMD` → `/stats.amdRewarded` | `REWARD_SYMBOL=NVDA` → `/stats.nvdaRewarded` |
 
-The ticker follows the family pattern (`$ASHIBA`, `$ADOGE`). It is one env var,
-`TOKEN_SYMBOL`, if the site uses something else.
+The ticker is **$BULL** — not the `$A…` pattern of `$ASHIBA`/`$ADOGE`. It is one env var,
+`TOKEN_SYMBOL`, and the site shows whatever `/token` serves, so it must match.
 
 `.example` is used for the domain, as in artidoge: it is reserved and can never
 resolve, so a DEPLOY step run before the substitution fails loudly instead of
